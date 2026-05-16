@@ -263,7 +263,7 @@ button.secondary:hover {
   overflow-wrap: anywhere;
 }
 
-.risk-summary,
+.affordability-summary,
 .insight,
 .comparison,
 .rate-risk,
@@ -273,13 +273,13 @@ button.secondary:hover {
   margin-top: 16px;
 }
 
-.risk-summary {
+.affordability-summary {
   display: grid;
   gap: 12px;
 }
 
 .insight h3,
-.risk-summary h3,
+.affordability-summary h3,
 .comparison h3,
 .rate-risk h3,
 .suggestions h3 {
@@ -287,50 +287,50 @@ button.secondary:hover {
   font-size: 1rem;
 }
 
-.risk-summary p {
+.affordability-summary p {
   margin-bottom: 0;
   color: #4b5563;
   line-height: 1.75;
 }
 
-.risk-summary-grid {
+.affordability-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.risk-card {
+.affordability-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfdff;
   padding: 12px;
 }
 
-.risk-card.danger {
+.affordability-card.danger {
   border-color: #efb5aa;
   background: #fff8f6;
 }
 
-.risk-card.caution {
+.affordability-card.caution {
   border-color: #e9c77e;
   background: #fffaf0;
 }
 
-.risk-card span {
+.affordability-card span {
   display: block;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
 }
 
-.risk-card strong {
+.affordability-card strong {
   display: block;
   margin: 7px 0 5px;
   font-size: 1.04rem;
   line-height: 1.35;
 }
 
-.risk-card p {
+.affordability-card p {
   color: #4b5563;
   font-size: 0.88rem;
   line-height: 1.55;
@@ -465,7 +465,7 @@ button.secondary:hover {
 @media (max-width: 520px) {
   .field-grid,
   .metrics,
-  .risk-summary-grid,
+  .affordability-grid,
   .comparison-grid,
   .rate-grid {
     grid-template-columns: 1fr;

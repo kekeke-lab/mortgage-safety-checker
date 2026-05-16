@@ -24,8 +24,8 @@ const resultNodes = {
   paymentRatio: document.querySelector("#payment-ratio"),
   cashLeft: document.querySelector("#cash-left"),
   loanAmount: document.querySelector("#loan-amount"),
-  riskSummaryText: document.querySelector("#risk-summary-text"),
-  riskSummaryGrid: document.querySelector("#risk-summary-grid"),
+  affordabilitySummaryText: document.querySelector("#affordability-summary-text"),
+  affordabilityGrid: document.querySelector("#affordability-grid"),
   insightText: document.querySelector("#insight-text"),
   comparisonGrid: document.querySelector("#comparison-grid"),
   rateGrid: document.querySelector("#rate-grid"),
@@ -205,50 +205,46 @@ function buildSuggestions(values, result) {
   return suggestions;
 }
 
-function scenarioImpact(label, type, result, base) {
-  return {
-    label,
-    type,
-    level: result.level,
-    cashLeft: result.cashLeft,
-    cashLoss: base.cashLeft - result.cashLeft,
-  };
-}
+function renderAffordabilitySummary(result) {
+  const safetyBuffer = 8;
+  const safetyGap = result.cashLeft - safetyBuffer;
+  const isEnough = safetyGap >= 0;
 
-function riskSummaryItems(values) {
-  const base = diagnose(values);
-  const propertyResult = diagnose({ ...values, propertyPrice: values.propertyPrice + 500 });
-  const rateResult = diagnose({ ...values, rate: values.rate + 1 });
-  const fixedCostResult = diagnose({ ...values, housingExtras: values.housingExtras + 1 });
+  resultNodes.affordabilitySummaryText.textContent = isEnough
+    ? "この条件では、急な支出や固定費の上振れに備える余裕があります。"
+    : "まずは月の家計余力を安全圏まで戻す条件を探しましょう。";
 
-  return [
-    scenarioImpact("物件価格 +500万円", "物件価格", propertyResult, base),
-    scenarioImpact("金利 +1.0%", "金利", rateResult, base),
-    scenarioImpact("固定費 +1万円/月", "固定費", fixedCostResult, base),
-  ];
-}
-
-function renderRiskSummary(values) {
-  const items = riskSummaryItems(values);
-  const hasImpact = items.some((item) => item.cashLoss > 0);
-
-  resultNodes.riskSummaryText.textContent =
-    hasImpact
-      ? "家計余力がどれくらい削られるかを、主要な変動ごとに見ています。"
-      : "この条件では、主要な変動を入れても家計余力への影響は限定的です。";
-
-  const cards = items.map((item) => {
+  const cards = [
+    {
+      label: "今の家計余力",
+      value: `${yenMan(result.cashLeft)}/月`,
+      note: "住宅ローンと固定費を引いた後の目安",
+      level: result.level,
+    },
+    {
+      label: isEnough ? "安全圏からの余裕" : "安全圏まで",
+      value: isEnough ? `+${yenMan(safetyGap)}/月` : `あと${yenMan(Math.abs(safetyGap))}/月`,
+      note: "月8万円の余力を安全圏の目安にしています",
+      level: isEnough ? "safe" : result.level,
+    },
+    {
+      label: "返済比率",
+      value: `${round(result.paymentRatio, 1)}%`,
+      note: "年間返済額が年収に占める割合",
+      level: result.level,
+    },
+  ].map((item) => {
     const card = document.createElement("article");
-    card.className = `risk-card ${item.level === "safe" ? "" : item.level}`;
+    card.className = `affordability-card ${item.level === "safe" ? "" : item.level}`;
     card.innerHTML = `
-      <span>${item.type}</span>
-      <strong>${item.label}</strong>
-      <p>家計余力 ${yenMan(item.cashLeft)} / 影響 ${item.cashLoss > 0 ? `-${yenMan(item.cashLoss)}` : "ほぼなし"}</p>
+      <span>${item.label}</span>
+      <strong>${item.value}</strong>
+      <p>${item.note}</p>
     `;
     return card;
   });
 
-  resultNodes.riskSummaryGrid.replaceChildren(...cards);
+  resultNodes.affordabilityGrid.replaceChildren(...cards);
 }
 
 function comparisonScenarios(values) {
@@ -360,7 +356,7 @@ function render() {
 
   resultNodes.insightText.textContent = `推定手取りは月${yenMan(result.takeHome)}。住宅ローン返済と固定費を引いた後の家計余力は月${yenMan(result.cashLeft)}です。${safeLine}`;
 
-  renderRiskSummary(values);
+  renderAffordabilitySummary(result);
   renderComparison(values);
   renderRateRisk(values);
 
