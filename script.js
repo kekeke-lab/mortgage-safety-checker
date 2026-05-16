@@ -25,6 +25,7 @@ const resultNodes = {
   cashLeft: document.querySelector("#cash-left"),
   loanAmount: document.querySelector("#loan-amount"),
   insightText: document.querySelector("#insight-text"),
+  comparisonGrid: document.querySelector("#comparison-grid"),
   suggestionList: document.querySelector("#suggestion-list"),
 };
 
@@ -201,6 +202,50 @@ function buildSuggestions(values, result) {
   return suggestions;
 }
 
+function comparisonScenarios(values) {
+  return [
+    { label: "-500万円", price: Math.max(values.propertyPrice - 500, 0), current: false },
+    { label: "現在", price: values.propertyPrice, current: true },
+    { label: "+500万円", price: values.propertyPrice + 500, current: false },
+  ].filter((scenario, index, scenarios) => {
+    return scenarios.findIndex((item) => item.price === scenario.price) === index;
+  });
+}
+
+function renderComparison(values) {
+  const cards = comparisonScenarios(values).map((scenario) => {
+    const result = diagnose({ ...values, propertyPrice: scenario.price });
+    const card = document.createElement("article");
+    card.className = `comparison-card ${scenario.current ? "current" : ""} ${result.level === "safe" ? "" : result.level}`;
+
+    card.innerHTML = `
+      <strong>${scenario.label}: ${yenMan(scenario.price)}</strong>
+      <dl>
+        <div>
+          <dt>判定</dt>
+          <dd>${result.label}</dd>
+        </div>
+        <div>
+          <dt>月返済</dt>
+          <dd>${yenMan(result.payment)}</dd>
+        </div>
+        <div>
+          <dt>返済比率</dt>
+          <dd>${round(result.paymentRatio, 1)}%</dd>
+        </div>
+        <div>
+          <dt>家計余力</dt>
+          <dd>${yenMan(result.cashLeft)}</dd>
+        </div>
+      </dl>
+    `;
+
+    return card;
+  });
+
+  resultNodes.comparisonGrid.replaceChildren(...cards);
+}
+
 function render() {
   const values = readValues();
   const result = diagnose(values);
@@ -221,6 +266,8 @@ function render() {
         : "返済比率または家計余力に赤信号があります。物件価格を下げる、頭金を増やす、他ローンを整理するなど、購入前に再試算したい条件です。";
 
   resultNodes.insightText.textContent = `推定手取りは月${yenMan(result.takeHome)}。住宅ローン返済と固定費を引いた後の家計余力は月${yenMan(result.cashLeft)}です。${safeLine}`;
+
+  renderComparison(values);
 
   resultNodes.suggestionList.replaceChildren(
     ...buildSuggestions(values, result).map((text) => {
