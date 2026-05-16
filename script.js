@@ -11,7 +11,6 @@ const defaults = {
 
 const form = document.querySelector("#mortgage-form");
 const resetButton = document.querySelector("#reset-button");
-const copySnsButton = document.querySelector("#copy-sns-button");
 
 const fields = Object.fromEntries(
   Object.keys(defaults).map((key) => [key, document.querySelector(`#${key}`)]),
@@ -26,7 +25,7 @@ const resultNodes = {
   cashLeft: document.querySelector("#cash-left"),
   loanAmount: document.querySelector("#loan-amount"),
   insightText: document.querySelector("#insight-text"),
-  snsText: document.querySelector("#sns-text"),
+  suggestionList: document.querySelector("#suggestion-list"),
 };
 
 function yenMan(value) {
@@ -103,6 +102,105 @@ function diagnose(values) {
   };
 }
 
+function findSafePropertyPrice(values) {
+  for (let price = values.propertyPrice; price >= 500; price -= 10) {
+    const result = diagnose({ ...values, propertyPrice: price });
+    if (result.level === "safe") return price;
+  }
+  return 0;
+}
+
+function findCautionPropertyPrice(values) {
+  for (let price = values.propertyPrice; price >= 500; price -= 10) {
+    const result = diagnose({ ...values, propertyPrice: price });
+    if (result.level !== "danger") return price;
+  }
+  return 0;
+}
+
+function findNeededDownPayment(values) {
+  for (let downPayment = values.downPayment; downPayment <= values.propertyPrice; downPayment += 10) {
+    const result = diagnose({ ...values, downPayment });
+    if (result.level === "safe") return downPayment;
+  }
+  return values.propertyPrice;
+}
+
+function findCautionDownPayment(values) {
+  for (let downPayment = values.downPayment; downPayment <= values.propertyPrice; downPayment += 10) {
+    const result = diagnose({ ...values, downPayment });
+    if (result.level !== "danger") return downPayment;
+  }
+  return values.propertyPrice;
+}
+
+function findOtherDebtReduction(values) {
+  for (let otherDebt = values.otherDebt; otherDebt >= 0; otherDebt -= 0.5) {
+    const result = diagnose({ ...values, otherDebt });
+    if (result.level === "safe") return values.otherDebt - otherDebt;
+  }
+  return values.otherDebt;
+}
+
+function buildSuggestions(values, result) {
+  if (result.level === "safe") {
+    return [
+      "この条件では安全圏です。固定資産税、修繕費、教育費、車の買い替えなどを別枠で見ておくと、さらに判断しやすくなります。",
+      "金利が上がった場合も確認したいなら、金利を0.5%から1.0%上げて再試算してみてください。",
+    ];
+  }
+
+  const safePrice = findSafePropertyPrice(values);
+  const cautionPrice = findCautionPropertyPrice(values);
+  const neededDownPayment = findNeededDownPayment(values);
+  const cautionDownPayment = findCautionDownPayment(values);
+  const debtReduction = findOtherDebtReduction(values);
+  const suggestions = [];
+
+  if (safePrice > 0 && safePrice < values.propertyPrice) {
+    suggestions.push(
+      `安全圏に近づけるには、物件価格を約${yenMan(safePrice)}まで下げるのが目安です。`,
+    );
+  } else if (result.level === "danger" && cautionPrice > 0 && cautionPrice < values.propertyPrice) {
+    suggestions.push(
+      `まず要注意ラインを抜けるには、物件価格を約${yenMan(cautionPrice)}まで下げるのが目安です。`,
+    );
+  }
+
+  if (neededDownPayment > values.downPayment && neededDownPayment < values.propertyPrice) {
+    suggestions.push(
+      `物件価格を変えない場合、自己資金を約${yenMan(neededDownPayment)}まで増やすと安全圏に近づきます。`,
+    );
+  } else if (
+    result.level === "danger" &&
+    cautionDownPayment > values.downPayment &&
+    cautionDownPayment < values.propertyPrice
+  ) {
+    suggestions.push(
+      `物件価格を変えない場合、自己資金を約${yenMan(cautionDownPayment)}まで増やすと要注意ラインを抜けやすくなります。`,
+    );
+  }
+
+  if (debtReduction > 0) {
+    suggestions.push(
+      `他ローン返済を月${yenMan(debtReduction)}ほど減らせると、家計余力が改善します。`,
+    );
+  }
+
+  if (result.cashLeft < 8) {
+    const targetCashLeft = result.level === "danger" ? 3 : 8;
+    suggestions.push(
+      `月の支出をあと約${yenMan(targetCashLeft - result.cashLeft)}見直せると、判定が一段改善しやすくなります。`,
+    );
+  }
+
+  suggestions.push(
+    "毎月の生活費、固定資産税など、金利を少し厳しめに入れて再試算すると、購入後のブレに備えやすくなります。",
+  );
+
+  return suggestions;
+}
+
 function render() {
   const values = readValues();
   const result = diagnose(values);
@@ -124,7 +222,13 @@ function render() {
 
   resultNodes.insightText.textContent = `推定手取りは月${yenMan(result.takeHome)}。住宅ローン返済と固定費を引いた後の家計余力は月${yenMan(result.cashLeft)}です。${safeLine}`;
 
-  resultNodes.snsText.textContent = `年収${values.income}万円で${values.propertyPrice}万円の家を買うと、毎月返済は約${yenMan(result.payment)}。返済比率は${round(result.paymentRatio, 1)}%。「借りられる額」より「返しても残る額」を見るのが大事。`;
+  resultNodes.suggestionList.replaceChildren(
+    ...buildSuggestions(values, result).map((text) => {
+      const item = document.createElement("li");
+      item.textContent = text;
+      return item;
+    }),
+  );
 }
 
 function resetDefaults() {
@@ -144,30 +248,5 @@ Object.values(fields).forEach((field) => {
 });
 
 resetButton.addEventListener("click", resetDefaults);
-
-copySnsButton.addEventListener("click", async () => {
-  const text = resultNodes.snsText.textContent.trim();
-  if (!text) return;
-
-  try {
-    await navigator.clipboard.writeText(text);
-    copySnsButton.textContent = "コピー済み";
-    copySnsButton.classList.add("copied");
-  } catch {
-    copySnsButton.textContent = "選択してコピー";
-    resultNodes.snsText.setAttribute("tabindex", "-1");
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(resultNodes.snsText);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    resultNodes.snsText.focus();
-  }
-
-  window.setTimeout(() => {
-    copySnsButton.textContent = "コピー";
-    copySnsButton.classList.remove("copied");
-  }, 1800);
-});
 
 render();
