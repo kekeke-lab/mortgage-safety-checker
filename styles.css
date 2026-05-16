@@ -263,6 +263,7 @@ button.secondary:hover {
   overflow-wrap: anywhere;
 }
 
+.risk-summary,
 .insight,
 .comparison,
 .rate-risk,
@@ -273,13 +274,68 @@ button.secondary:hover {
   margin-top: 16px;
 }
 
+.risk-summary {
+  display: grid;
+  gap: 12px;
+}
+
 .insight h3,
+.risk-summary h3,
 .comparison h3,
 .rate-risk h3,
 .income-risk h3,
 .suggestions h3 {
   margin-bottom: 8px;
   font-size: 1rem;
+}
+
+.risk-summary p {
+  margin-bottom: 0;
+  color: #4b5563;
+  line-height: 1.75;
+}
+
+.risk-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.risk-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 12px;
+}
+
+.risk-card.danger {
+  border-color: #efb5aa;
+  background: #fff8f6;
+}
+
+.risk-card.caution {
+  border-color: #e9c77e;
+  background: #fffaf0;
+}
+
+.risk-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.risk-card strong {
+  display: block;
+  margin: 7px 0 5px;
+  font-size: 1.04rem;
+  line-height: 1.35;
+}
+
+.risk-card p {
+  color: #4b5563;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .comparison-grid,
@@ -421,6 +477,7 @@ button.secondary:hover {
 @media (max-width: 520px) {
   .field-grid,
   .metrics,
+  .risk-summary-grid,
   .comparison-grid,
   .rate-grid,
   .income-grid {

@@ -24,6 +24,8 @@ const resultNodes = {
   paymentRatio: document.querySelector("#payment-ratio"),
   cashLeft: document.querySelector("#cash-left"),
   loanAmount: document.querySelector("#loan-amount"),
+  riskSummaryText: document.querySelector("#risk-summary-text"),
+  riskSummaryGrid: document.querySelector("#risk-summary-grid"),
   insightText: document.querySelector("#insight-text"),
   comparisonGrid: document.querySelector("#comparison-grid"),
   rateGrid: document.querySelector("#rate-grid"),
@@ -204,6 +206,52 @@ function buildSuggestions(values, result) {
   return suggestions;
 }
 
+function scenarioImpact(label, type, result, base) {
+  return {
+    label,
+    type,
+    level: result.level,
+    cashLeft: result.cashLeft,
+    cashLoss: base.cashLeft - result.cashLeft,
+  };
+}
+
+function riskSummaryItems(values) {
+  const base = diagnose(values);
+  const propertyResult = diagnose({ ...values, propertyPrice: values.propertyPrice + 500 });
+  const rateResult = diagnose({ ...values, rate: values.rate + 1 });
+  const incomeResult = diagnose({ ...values, income: values.income * 0.8 });
+
+  return [
+    scenarioImpact("物件価格 +500万円", "物件価格", propertyResult, base),
+    scenarioImpact("金利 +1.0%", "金利", rateResult, base),
+    scenarioImpact("収入 -20%", "収入", incomeResult, base),
+  ];
+}
+
+function renderRiskSummary(values) {
+  const items = riskSummaryItems(values);
+  const worst = [...items].sort((a, b) => b.cashLoss - a.cashLoss)[0];
+
+  resultNodes.riskSummaryText.textContent =
+    worst.cashLoss > 0
+      ? `この条件で最も家計余力を削るのは「${worst.label}」です。まずここを重点的に見てください。`
+      : "この条件では、主要な変動を入れても家計余力への影響は限定的です。";
+
+  const cards = items.map((item) => {
+    const card = document.createElement("article");
+    card.className = `risk-card ${item.level === "safe" ? "" : item.level}`;
+    card.innerHTML = `
+      <span>${item.type}</span>
+      <strong>${item.label}</strong>
+      <p>家計余力 ${yenMan(item.cashLeft)} / 影響 ${item.cashLoss > 0 ? `-${yenMan(item.cashLoss)}` : "ほぼなし"}</p>
+    `;
+    return card;
+  });
+
+  resultNodes.riskSummaryGrid.replaceChildren(...cards);
+}
+
 function comparisonScenarios(values) {
   return [
     { label: "-500万円", price: Math.max(values.propertyPrice - 500, 0), current: false },
@@ -253,7 +301,6 @@ function rateScenarios(values) {
     { label: "現在", rate: values.rate, current: true },
     { label: "+0.5%", rate: values.rate + 0.5, current: false },
     { label: "+1.0%", rate: values.rate + 1, current: false },
-    { label: "+1.5%", rate: values.rate + 1.5, current: false },
   ];
 }
 
@@ -298,7 +345,6 @@ function incomeScenarios(values) {
     { label: "現在", income: values.income, current: true },
     { label: "-10%", income: values.income * 0.9, current: false },
     { label: "-20%", income: values.income * 0.8, current: false },
-    { label: "-30%", income: values.income * 0.7, current: false },
   ];
 }
 
@@ -358,6 +404,7 @@ function render() {
 
   resultNodes.insightText.textContent = `推定手取りは月${yenMan(result.takeHome)}。住宅ローン返済と固定費を引いた後の家計余力は月${yenMan(result.cashLeft)}です。${safeLine}`;
 
+  renderRiskSummary(values);
   renderComparison(values);
   renderRateRisk(values);
   renderIncomeRisk(values);
