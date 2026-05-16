@@ -27,6 +27,7 @@ const resultNodes = {
   insightText: document.querySelector("#insight-text"),
   comparisonGrid: document.querySelector("#comparison-grid"),
   rateGrid: document.querySelector("#rate-grid"),
+  incomeGrid: document.querySelector("#income-grid"),
   suggestionList: document.querySelector("#suggestion-list"),
 };
 
@@ -292,6 +293,50 @@ function renderRateRisk(values) {
   resultNodes.rateGrid.replaceChildren(...cards);
 }
 
+function incomeScenarios(values) {
+  return [
+    { label: "現在", income: values.income, current: true },
+    { label: "-10%", income: values.income * 0.9, current: false },
+    { label: "-20%", income: values.income * 0.8, current: false },
+    { label: "-30%", income: values.income * 0.7, current: false },
+  ];
+}
+
+function renderIncomeRisk(values) {
+  const cards = incomeScenarios(values).map((scenario) => {
+    const income = Math.max(scenario.income, 0);
+    const result = diagnose({ ...values, income });
+    const card = document.createElement("article");
+    card.className = `income-card ${scenario.current ? "current" : ""} ${result.level === "safe" ? "" : result.level}`;
+
+    card.innerHTML = `
+      <strong>${scenario.label}: ${yenMan(income)}</strong>
+      <dl>
+        <div>
+          <dt>判定</dt>
+          <dd>${result.label}</dd>
+        </div>
+        <div>
+          <dt>返済比率</dt>
+          <dd>${round(result.paymentRatio, 1)}%</dd>
+        </div>
+        <div>
+          <dt>推定手取り</dt>
+          <dd>${yenMan(result.takeHome)}</dd>
+        </div>
+        <div>
+          <dt>家計余力</dt>
+          <dd>${yenMan(result.cashLeft)}</dd>
+        </div>
+      </dl>
+    `;
+
+    return card;
+  });
+
+  resultNodes.incomeGrid.replaceChildren(...cards);
+}
+
 function render() {
   const values = readValues();
   const result = diagnose(values);
@@ -315,6 +360,7 @@ function render() {
 
   renderComparison(values);
   renderRateRisk(values);
+  renderIncomeRisk(values);
 
   resultNodes.suggestionList.replaceChildren(
     ...buildSuggestions(values, result).map((text) => {
