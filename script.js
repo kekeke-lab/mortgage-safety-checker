@@ -29,7 +29,6 @@ const resultNodes = {
   insightText: document.querySelector("#insight-text"),
   comparisonGrid: document.querySelector("#comparison-grid"),
   rateGrid: document.querySelector("#rate-grid"),
-  incomeGrid: document.querySelector("#income-grid"),
   suggestionList: document.querySelector("#suggestion-list"),
 };
 
@@ -220,22 +219,22 @@ function riskSummaryItems(values) {
   const base = diagnose(values);
   const propertyResult = diagnose({ ...values, propertyPrice: values.propertyPrice + 500 });
   const rateResult = diagnose({ ...values, rate: values.rate + 1 });
-  const incomeResult = diagnose({ ...values, income: values.income * 0.8 });
+  const fixedCostResult = diagnose({ ...values, housingExtras: values.housingExtras + 1 });
 
   return [
     scenarioImpact("物件価格 +500万円", "物件価格", propertyResult, base),
     scenarioImpact("金利 +1.0%", "金利", rateResult, base),
-    scenarioImpact("収入 -20%", "収入", incomeResult, base),
+    scenarioImpact("固定費 +1万円/月", "固定費", fixedCostResult, base),
   ];
 }
 
 function renderRiskSummary(values) {
   const items = riskSummaryItems(values);
-  const worst = [...items].sort((a, b) => b.cashLoss - a.cashLoss)[0];
+  const hasImpact = items.some((item) => item.cashLoss > 0);
 
   resultNodes.riskSummaryText.textContent =
-    worst.cashLoss > 0
-      ? `この条件で最も家計余力を削るのは「${worst.label}」です。まずここを重点的に見てください。`
+    hasImpact
+      ? "家計余力がどれくらい削られるかを、主要な変動ごとに見ています。"
       : "この条件では、主要な変動を入れても家計余力への影響は限定的です。";
 
   const cards = items.map((item) => {
@@ -340,49 +339,6 @@ function renderRateRisk(values) {
   resultNodes.rateGrid.replaceChildren(...cards);
 }
 
-function incomeScenarios(values) {
-  return [
-    { label: "現在", income: values.income, current: true },
-    { label: "-10%", income: values.income * 0.9, current: false },
-    { label: "-20%", income: values.income * 0.8, current: false },
-  ];
-}
-
-function renderIncomeRisk(values) {
-  const cards = incomeScenarios(values).map((scenario) => {
-    const income = Math.max(scenario.income, 0);
-    const result = diagnose({ ...values, income });
-    const card = document.createElement("article");
-    card.className = `income-card ${scenario.current ? "current" : ""} ${result.level === "safe" ? "" : result.level}`;
-
-    card.innerHTML = `
-      <strong>${scenario.label}: ${yenMan(income)}</strong>
-      <dl>
-        <div>
-          <dt>判定</dt>
-          <dd>${result.label}</dd>
-        </div>
-        <div>
-          <dt>返済比率</dt>
-          <dd>${round(result.paymentRatio, 1)}%</dd>
-        </div>
-        <div>
-          <dt>推定手取り</dt>
-          <dd>${yenMan(result.takeHome)}</dd>
-        </div>
-        <div>
-          <dt>家計余力</dt>
-          <dd>${yenMan(result.cashLeft)}</dd>
-        </div>
-      </dl>
-    `;
-
-    return card;
-  });
-
-  resultNodes.incomeGrid.replaceChildren(...cards);
-}
-
 function render() {
   const values = readValues();
   const result = diagnose(values);
@@ -407,7 +363,6 @@ function render() {
   renderRiskSummary(values);
   renderComparison(values);
   renderRateRisk(values);
-  renderIncomeRisk(values);
 
   resultNodes.suggestionList.replaceChildren(
     ...buildSuggestions(values, result).map((text) => {

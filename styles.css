@@ -267,7 +267,6 @@ button.secondary:hover {
 .insight,
 .comparison,
 .rate-risk,
-.income-risk,
 .suggestions {
   border-top: 1px solid var(--line);
   padding-top: 16px;
@@ -283,7 +282,6 @@ button.secondary:hover {
 .risk-summary h3,
 .comparison h3,
 .rate-risk h3,
-.income-risk h3,
 .suggestions h3 {
   margin-bottom: 8px;
   font-size: 1rem;
@@ -339,16 +337,14 @@ button.secondary:hover {
 }
 
 .comparison-grid,
-.rate-grid,
-.income-grid {
+.rate-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .comparison-card,
-.rate-card,
-.income-card {
+.rate-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfdff;
@@ -356,29 +352,25 @@ button.secondary:hover {
 }
 
 .comparison-card.current,
-.rate-card.current,
-.income-card.current {
+.rate-card.current {
   border-color: #8fb9dc;
   background: #f3f8fd;
 }
 
 .comparison-card.danger,
-.rate-card.danger,
-.income-card.danger {
+.rate-card.danger {
   border-color: #efb5aa;
   background: #fff8f6;
 }
 
 .comparison-card.caution,
-.rate-card.caution,
-.income-card.caution {
+.rate-card.caution {
   border-color: #e9c77e;
   background: #fffaf0;
 }
 
 .comparison-card strong,
-.rate-card strong,
-.income-card strong {
+.rate-card strong {
   display: block;
   margin-bottom: 8px;
   font-size: 1.05rem;
@@ -386,16 +378,14 @@ button.secondary:hover {
 }
 
 .comparison-card dl,
-.rate-card dl,
-.income-card dl {
+.rate-card dl {
   display: grid;
   gap: 6px;
   margin: 0;
 }
 
 .comparison-card div,
-.rate-card div,
-.income-card div {
+.rate-card div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -405,16 +395,14 @@ button.secondary:hover {
 }
 
 .comparison-card dt,
-.rate-card dt,
-.income-card dt {
+.rate-card dt {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
 .comparison-card dd,
-.rate-card dd,
-.income-card dd {
+.rate-card dd {
   margin: 0;
   color: var(--ink);
   font-size: 0.9rem;
@@ -479,8 +467,7 @@ button.secondary:hover {
   .metrics,
   .risk-summary-grid,
   .comparison-grid,
-  .rate-grid,
-  .income-grid {
+  .rate-grid {
     grid-template-columns: 1fr;
   }
 
