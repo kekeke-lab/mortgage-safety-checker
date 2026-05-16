@@ -26,6 +26,7 @@ const resultNodes = {
   loanAmount: document.querySelector("#loan-amount"),
   insightText: document.querySelector("#insight-text"),
   comparisonGrid: document.querySelector("#comparison-grid"),
+  rateGrid: document.querySelector("#rate-grid"),
   suggestionList: document.querySelector("#suggestion-list"),
 };
 
@@ -246,6 +247,51 @@ function renderComparison(values) {
   resultNodes.comparisonGrid.replaceChildren(...cards);
 }
 
+function rateScenarios(values) {
+  return [
+    { label: "現在", rate: values.rate, current: true },
+    { label: "+0.5%", rate: values.rate + 0.5, current: false },
+    { label: "+1.0%", rate: values.rate + 1, current: false },
+    { label: "+1.5%", rate: values.rate + 1.5, current: false },
+  ];
+}
+
+function renderRateRisk(values) {
+  const base = diagnose(values);
+  const cards = rateScenarios(values).map((scenario) => {
+    const result = diagnose({ ...values, rate: scenario.rate });
+    const card = document.createElement("article");
+    card.className = `rate-card ${scenario.current ? "current" : ""} ${result.level === "safe" ? "" : result.level}`;
+    const paymentDiff = result.payment - base.payment;
+
+    card.innerHTML = `
+      <strong>${scenario.label}: ${round(scenario.rate, 2)}%</strong>
+      <dl>
+        <div>
+          <dt>判定</dt>
+          <dd>${result.label}</dd>
+        </div>
+        <div>
+          <dt>月返済</dt>
+          <dd>${yenMan(result.payment)}</dd>
+        </div>
+        <div>
+          <dt>増加額</dt>
+          <dd>${scenario.current ? "-" : `+${yenMan(paymentDiff)}`}</dd>
+        </div>
+        <div>
+          <dt>家計余力</dt>
+          <dd>${yenMan(result.cashLeft)}</dd>
+        </div>
+      </dl>
+    `;
+
+    return card;
+  });
+
+  resultNodes.rateGrid.replaceChildren(...cards);
+}
+
 function render() {
   const values = readValues();
   const result = diagnose(values);
@@ -268,6 +314,7 @@ function render() {
   resultNodes.insightText.textContent = `推定手取りは月${yenMan(result.takeHome)}。住宅ローン返済と固定費を引いた後の家計余力は月${yenMan(result.cashLeft)}です。${safeLine}`;
 
   renderComparison(values);
+  renderRateRisk(values);
 
   resultNodes.suggestionList.replaceChildren(
     ...buildSuggestions(values, result).map((text) => {
