@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>住宅ローン安全額チェッカー</title>
+    <meta
+      name="description"
+      content="年収、生活費、返済条件から住宅ローンの毎月返済と家計余力をざっくり試算します。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Housing Budget Tool</p>
+          <h1 id="app-title">住宅ローン安全額チェッカー</h1>
+          <p class="lead">
+            「借りられる額」ではなく「返しても生活が残る額」を、家計ベースでざっくり確認できます。
+          </p>
+        </div>
+        <div class="summary-strip" aria-label="このツールで分かること">
+          <span>月返済</span>
+          <span>返済比率</span>
+          <span>家計余力</span>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <form class="panel input-panel" id="mortgage-form">
+          <div class="section-heading">
+            <p class="eyebrow">Input</p>
+            <h2>家計とローン条件</h2>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>世帯年収</span>
+              <input id="income" type="number" inputmode="numeric" min="0" step="10" value="500" />
+              <small>万円</small>
+            </label>
+            <label class="field">
+              <span>自己資金</span>
+              <input id="downPayment" type="number" inputmode="numeric" min="0" step="10" value="300" />
+              <small>万円</small>
+            </label>
+            <label class="field">
+              <span>希望物件価格</span>
+              <input id="propertyPrice" type="number" inputmode="numeric" min="0" step="10" value="3500" />
+              <small>万円</small>
+            </label>
+            <label class="field">
+              <span>毎月の生活費</span>
+              <input id="livingCost" type="number" inputmode="numeric" min="0" step="1" value="22" />
+              <small>万円</small>
+            </label>
+            <label class="field">
+              <span>他ローン返済</span>
+              <input id="otherDebt" type="number" inputmode="numeric" min="0" step="1" value="2" />
+              <small>万円/月</small>
+            </label>
+            <label class="field">
+              <span>金利</span>
+              <input id="rate" type="number" inputmode="decimal" min="0" step="0.05" value="1.2" />
+              <small>%</small>
+            </label>
+            <label class="field">
+              <span>返済年数</span>
+              <input id="years" type="number" inputmode="numeric" min="1" max="50" step="1" value="35" />
+              <small>年</small>
+            </label>
+            <label class="field">
+              <span>固定資産税など</span>
+              <input id="housingExtras" type="number" inputmode="numeric" min="0" step="1" value="2" />
+              <small>万円/月</small>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit">試算する</button>
+            <button type="button" class="secondary" id="reset-button">初期値に戻す</button>
+          </div>
+        </form>
+
+        <section class="panel result-panel" aria-live="polite">
+          <div class="section-heading">
+            <p class="eyebrow">Result</p>
+            <h2>診断結果</h2>
+          </div>
+
+          <div class="status-band" id="status-band">
+            <p id="status-label">安全圏</p>
+            <strong id="status-title">かなり余裕を見た返済計画です</strong>
+          </div>
+
+          <div class="metrics" aria-label="試算結果">
+            <div>
+              <span>毎月返済</span>
+              <strong id="monthly-payment">0万円</strong>
+            </div>
+            <div>
+              <span>返済比率</span>
+              <strong id="payment-ratio">0%</strong>
+            </div>
+            <div>
+              <span>住宅費後の余力</span>
+              <strong id="cash-left">0万円/月</strong>
+            </div>
+            <div>
+              <span>借入額</span>
+              <strong id="loan-amount">0万円</strong>
+            </div>
+          </div>
+
+          <div class="insight">
+            <h3>読み取り</h3>
+            <p id="insight-text"></p>
+          </div>
+
+          <div class="sns-copy">
+            <div class="copy-heading">
+              <h3>SNS投稿の切り口</h3>
+              <button type="button" class="copy-button" id="copy-sns-button">コピー</button>
+            </div>
+            <p id="sns-text"></p>
+          </div>
+
+          <p class="disclaimer">
+            この試算は概算です。税金、保険、修繕費、審査条件、金利変動などは個別に異なります。購入判断や契約前には専門家・金融機関へ確認してください。
+          </p>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
